@@ -1,6 +1,7 @@
-var express = require('express', { useUnifiedTopology: true });
-var bodyParser = require('body-parser', { useUnifiedTopology: true });
-var { ObjectId } = require('mongodb');
+const _ = require('lodash');
+const express = require('express', { useUnifiedTopology: true });
+const bodyParser = require('body-parser', { useUnifiedTopology: true });
+const { ObjectId } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { Todos } = require('./models/todo');
@@ -26,6 +27,8 @@ app.post('/todos', (req, res) => {
     });
 });
 
+
+// GET to Todos
 app.get('/todos', (req, res) => {
     Todos.find().then((todos) => {
         res.send({ todos });
@@ -34,7 +37,7 @@ app.get('/todos', (req, res) => {
     });
 });
 
-// GET to Todos
+
 
 app.get('/todos/:id', (req, res) => {
     // res.send(req.params);
@@ -71,6 +74,49 @@ app.delete('/todos/:id', (req, res) => {
     }).catch((e) => {
         res.status(400).send();
     });
+});
+
+// Update to todos
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    var body = _.pick(req.body, ['text', 'completed']);
+
+    if (!ObjectId.isValid(id)) {
+        return res.status(404).send();
+    }
+
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getDate();
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    Todos.findByIdAndUpdate(id, { $set: body }, { new: true }).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+        res.send({ todo });
+    }).catch((e) => {
+        res.status(404).send();
+    })
+});
+
+
+// POST / Users
+
+app.post('/users', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    var user = new Users(body);
+
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then((token) => {
+        res.header('X-auth', token).send(user);
+    }).catch((e) => {
+        res.status(400).send(e);
+    })
 });
 
 // Make Port Todos
