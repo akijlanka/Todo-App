@@ -3,9 +3,10 @@ const express = require('express', { useUnifiedTopology: true });
 const bodyParser = require('body-parser', { useUnifiedTopology: true });
 const { ObjectId } = require('mongodb');
 
-var { mongoose } = require('./db/mongoose');
-var { Todos } = require('./models/todo');
-var { Users } = require('./models/user');
+const { mongoose } = require('./db/mongoose');
+const { Todos } = require('./models/todo');
+const { Users } = require('./models/user');
+const { authenticat } = require('./middleware/authenticat');
 
 
 
@@ -111,12 +112,18 @@ app.post('/users', (req, res) => {
     var user = new Users(body);
 
     user.save().then(() => {
+        // console.log('newUser', newUser)
         return user.generateAuthToken();
     }).then((token) => {
-        res.header('X-auth', token).send(user);
+        res.header('x-auth', token).send(user);
     }).catch((e) => {
         res.status(400).send(e);
     })
+});
+
+
+app.get('/users/me', authenticat, (req, res) => {
+    res.send(req.user);
 });
 
 // Make Port Todos
