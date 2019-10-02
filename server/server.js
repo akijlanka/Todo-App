@@ -1,6 +1,7 @@
+require('./config/config');
 const _ = require('lodash');
-const express = require('express', { useUnifiedTopology: true });
-const bodyParser = require('body-parser', { useUnifiedTopology: true });
+const express = require('express');
+const bodyParser = require('body-parser');
 const { ObjectId } = require('mongodb');
 
 const { mongoose } = require('./db/mongoose');
@@ -133,8 +134,16 @@ app.post('/users/login', (req, res) => {
     Users.findByCredentials(body.email, body.password).then((user) => {
         return user.generateAuthToken().then((token) => {
             res.headers('x-auth', token).send(user);
-        }); 
+        });
     }).catch((e) => {
+        res.status(400).send();
+    });
+});
+
+app.delete('/users/me/token', authenticat, (req, res) => {
+    req.user.removeToken(req.token).then(() => {
+        res.status(200).send();
+    }, () => {
         res.status(400).send();
     });
 });
