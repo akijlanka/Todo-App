@@ -126,6 +126,19 @@ app.get('/users/me', authenticat, (req, res) => {
     res.send(req.user);
 });
 
+// POST /user login {email, password}
+app.post('/users/login', (req, res) => {
+    var body = _.pick(req.body, ['email', 'password']);
+    // res.send(body);
+    Users.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            res.headers('x-auth', token).send(user);
+        }); 
+    }).catch((e) => {
+        res.status(400).send();
+    });
+});
+
 // Make Port Todos
 
 app.listen(port, () => {
